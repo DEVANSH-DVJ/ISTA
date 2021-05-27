@@ -20,12 +20,12 @@ ps = 8;
 %% Get the noisy image using additive gaussian noise
 noisy = orig + noise_std*randn(H, W);
 
+% Define the sensing matrix as Identity
+phi = diag(ones(ps*ps, 1));
+
 %% Reconstruction of the original image
 % Define the orthonormal matrix in which the patches are sparse - here, 2D-DCT
 psi = kron(dctmtx(ps)', dctmtx(ps)');
-
-% Define the sensing matrix as Identity
-phi = diag(ones(ps*ps, 1));
 
 % Define the sensing matrix w.r.t. DCT coefficients
 A = phi * psi;
@@ -35,7 +35,7 @@ alpha = floor(eigs(A'*A, 1)) + 2;
 lambda = 3 * noise_std;
 iter = 100;
 
-% Initializing reconstructed image and averaging matrix
+% Initialize reconstructed image and averaging matrix
 recon = zeros(H, W, 'double');
 avg_mat = zeros(H, W, 'double');
 
@@ -69,7 +69,8 @@ figure; imshow([orig, recon]);
 imwrite(orig, 'results/q2a_orig.png');
 imwrite(recon, 'results/q2a_recon.png');
 % RMSE of the reconstructed image
-fprintf('RMSE : %f\n', (norm(double(recon - orig), 'fro')^2 / norm(double(orig), 'fro')^2));
+fprintf('RMSE : %f\n', (norm(double(orig) - double(recon), 'fro')^2 / norm(double(orig), 'fro')^2));
+fprintf('RMSE : %f\n', (norm(double(orig) - double(noisy), 'fro')^2 / norm(double(orig), 'fro')^2));
 
 % Evaluate the time taken
 toc;
