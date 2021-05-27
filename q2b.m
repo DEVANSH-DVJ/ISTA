@@ -46,6 +46,6 @@ recon_img(recon_img > 255) = 255;
 % Save the image and calculate RMSE
 figure; imshow(cast([recon_img(:,:), orig(:,:)], 'uint8'));
 imwrite(cast([recon_img(:,:), orig(:,:)], 'uint8'), 'results/q2b.png');
-fprintf('RMSE : %f\n', norm(recon_img(:,:) - orig(:,:), 'fro')/norm(orig(:,:), 'fro'));
+fprintf('RMSE : %f\n', norm(recon_img(:,:) - orig(:,:), 'fro')^2 / norm(orig(:,:)^2, 'fro'));
 
 toc; % Timer end

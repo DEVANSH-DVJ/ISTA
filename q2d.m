@@ -6,7 +6,7 @@ close all;
 rng(100);
 
 % Reading
-orig = zeros(100,1);
+orig = zeros(100, 1);
 ind = randi(100, [10 1]);
 orig(ind) = randi(10, [10 1]);
 
@@ -28,4 +28,5 @@ lambda = 0.01;
 
 y = A*orig;
 recon = ista(y, A, lambda, alpha, iter);
-fprintf('RMSE : %f\n', norm(recon - orig)/norm(orig));
+
+fprintf('RMSE : %f\n', norm(recon - orig)^2 / norm(orig)^2);
