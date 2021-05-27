@@ -9,7 +9,8 @@ function theta = ista(y, A, lambda, alpha, iter)
     % Output:
     %   theta : Sparse coefficients
     % Brief:
-    %   Iterative  for solving y = A*theta where theta is sparse
+    %   Iterative Shrinkage and Thresholding Algorithm (ISTA) for solving
+    %    cost function J(theta) = ||y - A*theta||_2^2 + lambda * ||theta|_1
 
     % Initialize theta
     theta = zeros(size(A, 2), 1);
@@ -19,7 +20,7 @@ function theta = ista(y, A, lambda, alpha, iter)
 
     % Iteratively converge
     for i=1:iter
-        theta = soft(theta + (A'*(y - A*theta))/alpha, thres);
+        theta = soft(theta + (A' * (y - A*theta))/alpha, thres);
     end
 end
 
