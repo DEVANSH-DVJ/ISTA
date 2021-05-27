@@ -16,7 +16,7 @@ function theta = ista(y, A, lambda, alpha, iter)
     theta = zeros(size(A, 2), 1);
 
     % Set soft thershold
-    thres = lambda/(2*alpha);
+    thres = lambda / (2 * alpha);
 
     % Iteratively converge
     for i=1:iter
