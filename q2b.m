@@ -2,50 +2,69 @@ clc;
 clear;
 close all;
 
-% Setting seed
+%% Set seed
 rng(0);
 
-% Reading
+%% Read the image
 orig = cast(imread("data/barbara256.png"),'double');
+
+%% Constants
+% Set the Height and Width of the image
 H = size(orig, 1);
 W = size(orig, 2);
-% figure; imshow(cast(orig, 'uint8'));
+% Set Patch size
+ps = 8;
 
-% Calculating phi, psi and thus, A.
-phi = randn(32, 64);
-psi = kron(dctmtx(8)', dctmtx(8)');
-A = phi*psi;
+% Define the sensing matrix as iid Gaussian Matrix
+phi = randn(ps*ps/2, ps*ps);
 
-% Setting alpha, lambda and number of iterations
-alpha = floor(eigs(A'*A,1)) + 1;
-lambda = 1;
+%% Reconstruction of the original image
+% Define the orthonormal matrix in which the patches are sparse - here, 2D-DCT
+psi = kron(dctmtx(ps)', dctmtx(ps)');
+
+% Define the sensing matrix w.r.t. DCT coefficients
+A = phi * psi;
+
+% Set alpha, lambda and number of iterations for ISTA
+alpha = floor(eigs(A'*A, 1)) + 2;
+lambda = 3;
 iter = 100;
 
-% Initializing reconstructed image and averaging matrix
-recon_img = zeros(H, W, 'double');
+% Initialize reconstructed image and averaging matrix
+recon = zeros(H, W, 'double');
 avg_mat = zeros(H, W, 'double');
 
-tic; % Timer start
+tic;
+% For every (overlapping) patch
+for i=1:H-ps+1
+    for j=1:W-ps+1
+        % Get the compressed measurement of the patch
+        y = phi * reshape(orig(i:i+ps-1,j:j+ps-1), [8*8 1]);
 
-% Iterating over all possible 8x8 patches in the image
-for i=1:H-7
-    for j=1:W-7
-        y = phi * reshape(orig(i:i+7,j:j+7), [8*8 1]);
+        % Use ISTA to obtain the DCT coefficients
         theta = ista(y, A, lambda, alpha, iter);
-        recon_img(i:i+7,j:j+7) = recon_img(i:i+7,j:j+7) + reshape(psi * theta, [8 8]);
-        avg_mat(i:i+7,j:j+7) = avg_mat(i:i+7,j:j+7) + ones(8,8);
-        i, j % Prints the coordinates, to check for speed and debugging
+
+        % Update the reconstructed patch from the coefficients
+        recon(i:i+ps-1,j:j+ps-1) = recon(i:i+ps-1,j:j+ps-1) + reshape(psi * theta, [8 8]);
+        avg_mat(i:i+ps-1,j:j+ps-1) = avg_mat(i:i+ps-1,j:j+ps-1) + ones(8,8);
+
+        % Print the co-ordinates of the patch, to check for speed and debugging
+        fprintf('(%i, %i)\n', i, j);
     end
 end
 
-% Normalize the reconstructed image
-recon_img(:,:) = 2*recon_img(:,:)./avg_mat(:,:);
-recon_img(recon_img < 0) = 0;
-recon_img(recon_img > 255) = 255;
+%% Normalize the reconstructed frames
+recon = 2 * recon ./ avg_mat;
+recon = cast(recon, 'uint8');
+orig = cast(orig, 'uint8');
 
-% Save the image and calculate RMSE
-figure; imshow(cast([recon_img(:,:), orig(:,:)], 'uint8'));
-imwrite(cast([recon_img(:,:), orig(:,:)], 'uint8'), 'results/q2b.png');
-fprintf('RMSE : %f\n', norm(recon_img(:,:) - orig(:,:), 'fro')^2 / norm(orig(:,:)^2, 'fro'));
+%% Save the result and Compute RMSE (Relative Mean Squared Error)
+% Display and Save the reconstructed frame
+figure; imshow([orig, recon]);
+imwrite(orig, 'results/q2b_orig.png');
+imwrite(recon, 'results/q2b_recon.png');
+% RMSE of the reconstructed image
+fprintf('RMSE : %f\n', (norm(double(orig) - double(recon), 'fro')^2 / norm(double(orig), 'fro')^2));
 
-toc; % Timer end
+% Evaluate the time taken
+toc;
